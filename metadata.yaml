@@ -1,7 +1,7 @@
 name: astrbot_plugin_bilibili_meme
 display_name: B站学梗
 desc: 从 B站视频提取网络梗和总结，维护独立梗库，并可每周追踪指定 UP 主。
-version: 0.1.0
+version: 0.1.1
 author: hhhhhhezeus
 repo: https://github.com/hhhhhhezeus/astrbot_plugin_bilibili_meme
 astrbot_version: ">=4.24.0,<5"

@@ -261,3 +261,27 @@ class AdapterTests(unittest.IsolatedAsyncioTestCase):
             ]
         self.assertIn("视频摘要", first[0])
         self.assertIn("视频摘要", second[0])
+
+    async def test_context_injection_failure_does_not_break_chat(self):
+        self.plugin.config["inject_matched_memes"] = True
+        req = types.SimpleNamespace(extra_user_content_parts=[])
+        with patch.object(self.plugin, "_search", side_effect=OSError("db broken")):
+            await self.plugin.inject_known_memes(Event(), req)
+        self.assertEqual(req.extra_user_content_parts, [])
+
+    async def test_timeout_has_clear_message(self):
+        async def timed_out():
+            raise TimeoutError()
+
+        result = await self.plugin._run(Event(), timed_out)
+        self.assertIn("超时", result)
+
+    async def test_weekly_status_reports_pending_and_missing_configuration(self):
+        self.plugin.config.update(
+            {"weekly_enabled": True, "weekly_provider_id": "", "write_to_db": False}
+        )
+        self.plugin._weekly_runner._save({"done": {}, "pending_end": 1793635200})
+        result = [x async for x in self.plugin.weekly_status(Event())][0]
+        self.assertIn("待处理周截止", result)
+        self.assertIn("尚未配置周任务模型", result)
+        self.assertIn("写入梗库已关闭", result)

@@ -49,3 +49,21 @@ class SubtitleURLTests(unittest.TestCase):
             self.assertEqual(
                 client._subtitle_json("https://aisubtitle.hdslb.com/a"), {"body": []}
             )
+
+    def test_large_subtitle_is_rejected(self):
+        client = BiliClient(rate_limit=0)
+        with patch("urllib.request.build_opener") as build:
+            build.return_value.open.return_value = io.BytesIO(
+                b"x" * (8 * 1024 * 1024 + 1)
+            )
+            with self.assertRaises(BiliError):
+                client._subtitle_json("https://aisubtitle.hdslb.com/a")
+
+    def test_large_api_response_is_rejected(self):
+        client = BiliClient(rate_limit=0)
+        with patch("urllib.request.build_opener") as build:
+            build.return_value.open.return_value = io.BytesIO(
+                b"x" * (8 * 1024 * 1024 + 1)
+            )
+            with self.assertRaises(BiliError):
+                client._fetch("https://api.bilibili.com/x")

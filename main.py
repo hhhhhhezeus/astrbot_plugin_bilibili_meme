@@ -167,6 +167,10 @@ class BilibiliMeme(Star):
             return await operation()
         except asyncio.CancelledError:
             raise
+        except (asyncio.TimeoutError, TimeoutError):
+            return "❌ 请求超时，请稍后重试。"
+        except BiliError as exc:
+            return f"❌ B站请求失败：{str(exc)[:160]}"
         except Exception as exc:
             logger.exception("B站任务失败")
             return f"❌ 操作失败：{type(exc).__name__}，请查看插件日志。"
@@ -242,21 +246,30 @@ class BilibiliMeme(Star):
 
     @filter.on_llm_request()
     async def inject_known_memes(self, event, req):
-        if not self.config.get("inject_matched_memes", False):
+        if not self.config.get("enabled", True) or not self.config.get(
+            "inject_matched_memes", False
+        ):
             return
-        text = str(event.message_str or "")[:4000]
-        rows = await asyncio.to_thread(self._search, "", 200)
-        matches = [
-            (name, meaning) for name, meaning in rows if len(name) >= 2 and name in text
-        ][:3]
-        if matches:
-            content = "\n".join(f"{name}：{meaning[:300]}" for name, meaning in matches)
-            req.extra_user_content_parts.append(
-                TextPart(
-                    text="以下是用户消息中命中的参考梗义，仅供理解，不必强行使用：\n"
-                    + content
-                ).mark_as_temp()
-            )
+        try:
+            text = str(event.message_str or "")[:4000]
+            rows = await asyncio.to_thread(self._search, "", 200)
+            matches = [
+                (name, meaning)
+                for name, meaning in rows
+                if len(name) >= 2 and name in text
+            ][:3]
+            if matches:
+                content = "\n".join(
+                    f"{name}：{meaning[:300]}" for name, meaning in matches
+                )
+                req.extra_user_content_parts.append(
+                    TextPart(
+                        text="以下是用户消息中命中的参考梗义，仅供理解，不必强行使用：\n"
+                        + content
+                    ).mark_as_temp()
+                )
+        except Exception:
+            logger.exception("读取梗库失败，跳过本次上下文注入")
 
     @filter.command("周梗状态")
     async def weekly_status(self, event: AstrMessageEvent):
@@ -266,15 +279,25 @@ class BilibiliMeme(Star):
             return
         try:
             state = self._weekly_runner._load()
-            end = state.get("last_completed_end")
-            date = (
-                datetime.fromtimestamp(end, SHANGHAI).strftime("%Y-%m-%d")
-                if end
-                else "暂无"
+
+            def date(value):
+                return (
+                    datetime.fromtimestamp(value, SHANGHAI).strftime("%Y-%m-%d")
+                    if value
+                    else "暂无"
+                )
+
+            text = (
+                f"每周自动学梗已启用，北京时间周一 {cfg.weekly_hour:02d}:00 后执行。"
+                f"最近完成周截止：{date(state.get('last_completed_end'))}；"
+                f"待处理周截止：{date(state.get('pending_end'))}；"
+                f"已处理视频 {len(state['done'])} 条。失败会重试，请查看插件日志。"
             )
-            yield event.plain_result(
-                f"每周自动学梗已启用；最近完成周截止：{date}；已处理视频 {len(state['done'])} 条。失败请查看插件日志。"
-            )
+            if not str(self.config.get("weekly_provider_id", "")).strip():
+                text += "\n⚠️ 尚未配置周任务模型提供商。"
+            if not cfg.write_to_db:
+                text += "\n⚠️ 写入梗库已关闭，周任务不会执行。"
+            yield event.plain_result(text)
         except Exception:
             logger.exception("周任务状态读取失败")
             yield event.plain_result("周任务状态读取失败，请查看插件日志。")

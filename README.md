@@ -28,6 +28,8 @@
 
 源码包含隔离的单元和模拟宿主测试。功能和具体平台兼容性以目标 AstrBot、模型及 B站账号环境的实际结果为准。请勿将 Cookie、配置和本地数据库提交到公开仓库。
 
+更多设置、联调步骤和问题排查见 [安装与排错文档](docs/INSTALL.md)。
+
 ## 许可证
 
 MIT。B站客户端与提取逻辑改编自同作者的 [MaiBot B站学梗](https://github.com/hhhhhhezeus/bilibili-meme)。

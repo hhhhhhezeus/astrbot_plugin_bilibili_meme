@@ -95,6 +95,7 @@ _MIXIN_TAB = [
 ]
 
 
+_MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 _BV_RE = re.compile(r"(BV[0-9A-Za-z]{10})")
 
 
@@ -139,7 +140,10 @@ class BiliClient:
             with urllib.request.build_opener(_NoRedirect()).open(
                 req, timeout=self.timeout
             ) as resp:
-                return resp.read()
+                raw = resp.read(_MAX_RESPONSE_BYTES + 1)
+                if len(raw) > _MAX_RESPONSE_BYTES:
+                    raise BiliError("B站响应超过大小限制")
+                return raw
         except urllib.error.HTTPError as exc:
             raise BiliError(f"HTTP {exc.code}: {url[:120]}") from exc
         except (urllib.error.URLError, TimeoutError) as exc:
@@ -535,7 +539,10 @@ class BiliClient:
             with urllib.request.build_opener(NoRedirect()).open(
                 req, timeout=self.timeout
             ) as response:
-                payload = json.load(response)
+                raw = response.read(_MAX_RESPONSE_BYTES + 1)
+                if len(raw) > _MAX_RESPONSE_BYTES:
+                    raise BiliError("字幕响应超过大小限制")
+                payload = json.loads(raw)
         except (urllib.error.URLError, TimeoutError, ValueError) as exc:
             raise BiliError("字幕下载失败或格式无效") from exc
         if not isinstance(payload, dict):
