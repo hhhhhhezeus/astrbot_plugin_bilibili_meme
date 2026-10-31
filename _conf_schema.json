@@ -1,0 +1,81 @@
+{
+  "enabled": {
+    "description": "启用插件",
+    "type": "bool",
+    "default": true
+  },
+  "write_to_db": {
+    "description": "写入独立梗库",
+    "type": "bool",
+    "default": true
+  },
+  "reject_taboo_strong": {
+    "description": "拒绝高敏感梗",
+    "type": "bool",
+    "default": true
+  },
+  "max_candidates": {
+    "description": "选源候选数",
+    "type": "int",
+    "default": 5
+  },
+  "comment_pages": {
+    "description": "评论页数",
+    "type": "int",
+    "default": 2
+  },
+  "danmaku_segments": {
+    "description": "弹幕分片数",
+    "type": "int",
+    "default": 2
+  },
+  "rate_limit_seconds": {
+    "description": "B站请求间隔（秒）",
+    "type": "float",
+    "default": 1.2
+  },
+  "sessdata": {
+    "description": "B站 SESSDATA",
+    "type": "string",
+    "default": "",
+    "secret": true
+  },
+  "min_confidence": {
+    "description": "梗置信度下限",
+    "type": "float",
+    "default": 0.5
+  },
+  "weekly_enabled": {
+    "description": "启用每周自动学梗",
+    "type": "bool",
+    "default": false
+  },
+  "weekly_hour": {
+    "description": "每周一执行小时（北京时间）",
+    "type": "int",
+    "default": 9
+  },
+  "weekly_provider_id": {
+    "description": "周任务模型提供商 ID",
+    "type": "string",
+    "default": "",
+    "hint": "开启周任务时必填；填写 AstrBot 中已配置的聊天模型提供商 ID。",
+    "_special": "select_provider"
+  },
+  "command_cooldown_seconds": {
+    "description": "用户冷却秒数",
+    "type": "int",
+    "default": 30
+  },
+  "max_concurrent_requests": {
+    "description": "全局并发上限",
+    "type": "int",
+    "default": 2
+  },
+  "inject_matched_memes": {
+    "description": "对话中注入命中梗义",
+    "type": "bool",
+    "default": false,
+    "hint": "命中用户消息中的梗名时，最多附带三条本插件梗义给当前会话模型。"
+  }
+}
