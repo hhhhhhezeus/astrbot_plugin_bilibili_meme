@@ -29,7 +29,6 @@ class SubtitleURLTests(unittest.TestCase):
             with self.subTest(url=url), self.assertRaises(BiliError):
                 client._subtitle_json(url)
         with patch("urllib.request.build_opener") as build:
-            handler = build.call_args
 
             class Opener:
                 def open(self, req, timeout):
